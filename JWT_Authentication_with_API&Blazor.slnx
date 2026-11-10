@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="JWT_Authentication_with_API&amp;Blazor/SampleApp.Api.csproj" />
+  <Project Path="SampleApp.Application/SampleApp.Application.csproj" />
+  <Project Path="SampleApp.Domain/SampleApp.Domain.csproj" />
+  <Project Path="SampleApp.Infrastructure/SampleApp.Infrastructure.csproj" />
+  <Project Path="SampleApp.Shared/SampleApp.Shared.csproj" />
+</Solution>
