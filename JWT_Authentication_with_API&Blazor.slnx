@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="BlazorApp/SampleApp.Client.csproj" Id="3c389cf1-472e-4b92-aa28-8dee8c76eb57" />
   <Project Path="JWT_Authentication_with_API&amp;Blazor/SampleApp.Api.csproj" />
   <Project Path="SampleApp.Application/SampleApp.Application.csproj" />
   <Project Path="SampleApp.Domain/SampleApp.Domain.csproj" />
