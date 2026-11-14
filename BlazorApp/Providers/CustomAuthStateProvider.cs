@@ -41,6 +41,7 @@ namespace SampleApp.Client.Providers
         // Logout လုပ်ချိန်တွင် ခေါ်ရန်
         public void NotifyUserLoggedOut()
         {
+             _localStorage.RemoveItemAsync("authToken");
             var authState = Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
             NotifyAuthenticationStateChanged(authState);
         }
@@ -81,5 +82,4 @@ namespace SampleApp.Client.Providers
             return Convert.FromBase64String(base64);
         }
     }
-}
 }

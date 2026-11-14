@@ -24,4 +24,6 @@ builder.Services.AddHttpClient("SampleApi", client =>
 })
 .AddHttpMessageHandler<JwtAuthorizationHandler>();
 
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("SampleApi"));
+
 await builder.Build().RunAsync();

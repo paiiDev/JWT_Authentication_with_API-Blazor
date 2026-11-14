@@ -1,0 +1,142 @@
+﻿@page "/dashboard"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using SampleApp.Client.Providers
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-0">Dashboard</h2>
+                <p class="text-muted mt-1">Welcome back, @userName!</p>
+            </div>
+            <div>
+                @* Logout လုပ်မည့် ခလုတ် (Logic ကို ကိုယ်တိုင်ဆက်ရေးရန်) *@
+                <button class="btn btn-outline-danger shadow-sm" onclick="@HandleLogout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards ဇယားကွက်များ -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-primary text-white h-100">
+                <div class="card-body">
+                    <h6 class="text-uppercase fw-semibold mb-2">Total Users</h6>
+                    <h2 class="fw-bold mb-0">1,254</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-success text-white h-100">
+                <div class="card-body">
+                    <h6 class="text-uppercase fw-semibold mb-2">Active Sessions</h6>
+                    <h2 class="fw-bold mb-0">42</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-warning text-dark h-100">
+                <div class="card-body">
+                    <h6 class="text-uppercase fw-semibold mb-2">System Alerts</h6>
+                    <h2 class="fw-bold mb-0">3</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table အပိုင်း -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">Recent Activity</h5>
+
+            @if (isLoading)
+            {
+                <div class="d-flex justify-content-center my-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Action</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- နမူနာ Data များ (API မှ ရလာသော Data ဖြင့် အစားထိုးပါ) -->
+                            <tr>
+                                <td>#1024</td>
+                                <td>User Login</td>
+                                <td><span class="badge bg-success">Success</span></td>
+                                <td class="text-muted">Just now</td>
+                            </tr>
+                            <tr>
+                                <td>#1023</td>
+                                <td>Password Change</td>
+                                <td><span class="badge bg-success">Success</span></td>
+                                <td class="text-muted">2 hours ago</td>
+                            </tr>
+                            <tr>
+                                <td>#1022</td>
+                                <td>API Request</td>
+                                <td><span class="badge bg-danger">Failed</span></td>
+                                <td class="text-muted">Yesterday</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string userName = "User";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // ၁။ AuthenticationState မှတစ်ဆင့် လတ်တလော Login ဝင်ထားသော User ၏ အချက်အလက်ကို ယူခြင်း
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // User က တကယ်ပဲ Login ဝင်ထားတာ သေချာရင် Name (သို့) Email Claim ကို ဆွဲထုတ်ပါမည်
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            // JWT Token ထဲတွင် Name မပါပါက Email ကို အစားထိုး ယူပါမည်
+            userName = user.Identity.Name ?? user.FindFirst(c => c.Type == "email")?.Value ?? "User";
+        }
+
+        // ဤနေရာတွင်...
+        // ၂။ HttpClient ကိုသုံး၍ Dashboard Data များကို API မှ လှမ်းခေါ်ပါ
+        // var data = await Http.GetFromJsonAsync<...>("api/dashboard/summary");
+
+        // API ခေါ်နေချိန် Loading ပြနိုင်ရန် နမူနာ အချိန်ဆွဲထားခြင်း
+        await Task.Delay(1000);
+
+        // Data ရလာပါက Loading ကို ပိတ်ပါမည်
+        isLoading = false;
+    }
+
+    private async Task HandleLogout()
+    {
+        ((CustomAuthStateProvider)AuthStateProvider).NotifyUserLoggedOut();
+
+        NavManager.NavigateTo("/login");
+    }
+}

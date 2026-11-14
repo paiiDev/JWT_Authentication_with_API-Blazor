@@ -1,0 +1,117 @@
+﻿@page "/"
+@page "/login"
+@layout EmptyLayout
+@using Microsoft.AspNetCore.Components.Authorization
+@using SampleApp.Client.Providers
+@using SampleApp.Shared.DTOs.Auth
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold">Welcome Back</h3>
+                        <p class="text-muted">Please enter your details to sign in.</p>
+                    </div>
+
+                    @* Blazor ၏ Form System ကို အသုံးပြုထားခြင်း *@
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-semibold">Email address</label>
+                            <InputText id="email" class="form-control" @bind-Value="loginModel.Email" placeholder="name@example.com" />
+                            <ValidationMessage For="@(() => loginModel.Email)" class="text-danger small mt-1" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-semibold">Password</label>
+                            <InputText type="password" id="password" class="form-control" @bind-Value="loginModel.Password" placeholder="••••••••" />
+                            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small mt-1" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+                            Sign In
+                        </button>
+                    </EditForm>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginModel = new LoginDto();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(loginModel.Email) || string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            errorMessage = "Please enter both email and password.";
+            return;
+        }
+
+        errorMessage = string.Empty;
+        isLoading = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+                if (result is null || string.IsNullOrWhiteSpace(result.Token))
+                {
+                    errorMessage = "Login succeeded but no token was returned. Please try again.";
+                    return;
+                }
+
+                await LocalStorage.SetItemAsync("authToken", result.Token);
+
+                ((CustomAuthStateProvider)AuthStateProvider).NotifyUserLoggedIn(result.Token);
+                NavManager.NavigateTo("/dashboard");
+            }
+            else
+            {
+                errorMessage = "Invalid email or password. Please try again.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Unable to sign in right now. Please try again later.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+[CascadingParameter]
+private Task<AuthenticationState>? AuthState { get; set; }
+
+protected override async Task OnInitializedAsync()
+{
+    if (AuthState is null) return;
+
+    var authState = await AuthState;
+    
+    // User က Login ဝင်ပြီးသား (Authenticated) ဖြစ်နေပါက
+    if (authState.User.Identity is not null && authState.User.Identity.IsAuthenticated)
+    {
+        // Login Page ကို ပြမနေတော့ဘဲ Dashboard ဆီ ချက်ချင်း ပြန်ပို့ပါမည်
+        NavManager.NavigateTo("/dashboard");
+    }
+}
+
+   
+}
+
+
